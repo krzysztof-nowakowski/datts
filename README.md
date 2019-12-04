@@ -41,6 +41,11 @@ A: From your mail service provider, also check your account settings or maybe on
 * https://www.arclab.com/en/kb/email/list-of-smtp-and-imap-servers-mailserver-list.html
 * https://www.cubexsoft.com/help/imap-server.html
 
+#### Q: Will datts delete my messages in mailbox?
+
+A: Default is to leave them in mailbox. However if you don't download them all at first run and run datts again it will download the same messages next time and write them to disk with slighty changed names. This is to avoid data overwriting as you may have more than one attachmet named the same.
+
+
 ## Note: 
 - this tool assumes the default port 993, if your is different you need to change `SERVER_PORT =  993` in the code
 to whatever is needed.
