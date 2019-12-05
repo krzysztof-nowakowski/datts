@@ -43,8 +43,11 @@ A: From your mail service provider, also check your account settings or maybe on
 
 #### Q: Will datts delete my messages in mailbox?
 
-A: Default is to leave them in mailbox. However if you don't download them all at first run and run datts again it will download the same messages next time and write them to disk with slighty changed names. This is to avoid data overwriting as you may have more than one attachmet named the same.
+A: Default is to leave them in mailbox.
 
+#### Q: How about data being overwritten?
+
+A:  If you don't download all of the attachments at first run and run datts again, it will download the same messages next time and write them to disk with slighty changed names. This is to avoid data overwriting as you may have more than one attachmet named the same name.
 
 ## Note: 
 - this tool assumes the default port 993, if your is different you need to change `SERVER_PORT =  993` in the code
