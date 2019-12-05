@@ -43,7 +43,7 @@ A: From your mail service provider, also check your account settings or maybe on
 
 #### Q: Will datts delete my messages in mailbox?
 
-A: Default is to leave them in mailbox.
+A: Default is to leave them in mailbox unless you specify --delete option
 
 #### Q: How about data being overwritten?
 
