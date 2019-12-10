@@ -51,7 +51,7 @@ A:  If you don't download all of the attachments at first run and run datts agai
 
 #### Q: What does the --noinline option do?
 
-A: When you create email and insert for eg. image in the text, it will become "inline attachment". Sometimes you don't want to download this type of files as often they are company logos, banners or similiar garbage.
+A: When you create email and insert for eg. image in the text, it will become "inline attachment". Sometimes you don't want to download this type of files as often they are logos, banners or similiar garbage.
 
 ## Note: 
 - this tool assumes the default port 993, if your is different you need to change `SERVER_PORT =  993` in the code
