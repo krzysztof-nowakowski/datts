@@ -20,16 +20,18 @@ or hit Download button
 
 Usage:  ./datts.py --login --password --mbox --dir --server [--n] [--delete] [--dump] [--noinline] [--help]
 
-	--help		show this help	
-	--login		login to your account
-	--password	password to your account
-	--server	server name
-	--mbox		remote folder with attachments
-	--dir		local folder for storing attachments
-	--n		how many messages to download? Default is all of them.
-	--delete	should we delete message after download? Default is to NOT delete.
-	--dump		print provided options and exit
-	--noinline	skip attachments embedded in message body text
+	Option		Argument	Description
+	-------------------------------------------
+	--help				show this help	
+	--login		string		login to your account
+	--password	string		password to your account
+	--server	string		server name
+	--mbox		string		remote folder with attachments
+	--dir		string		local folder for storing attachments
+	--n		number		how many messages to download? Default is all of them.
+	--delete			should we delete message after download? Default is to NOT delete.
+	--dump				print provided options and exit
+	--noinline			skip attachments embedded in message body text
 
 ```
 
