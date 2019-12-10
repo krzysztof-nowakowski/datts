@@ -57,7 +57,7 @@ A: When you create email and insert for eg. image in the text, it will become "i
 - this tool assumes the default port 993, if your is different you need to change `SERVER_PORT =  993` in the code
 to whatever is needed.
 
-### TODO:
+## TODO:
 
 - [ ] replace --login/--password options with getpass
 - [ ] handling of --mbox/--dir with non-ASCII charset
