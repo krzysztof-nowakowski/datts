@@ -9,7 +9,7 @@ including free gmail.com, outlook.com, yahoo.com etc.
 ## How to install
 
 ```sh
- git clone https://github.com/krzysztof-nowakowski/datts
+ git clone https://github.com/krzysztof-nowakowski/datts.git
 ```
 or hit Download button
 
