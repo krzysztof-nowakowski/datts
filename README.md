@@ -43,13 +43,13 @@ A: From your mail service provider, also check your account settings or maybe on
 
 #### Q: Will datts delete my messages in mailbox?
 
-A: Default is to leave them in mailbox unless you specify --delete option. Keep in mind that this is permanent deletion, you won't find deleted emails in your Trash/Bin folder.
+A: Default is to leave them in mailbox unless you specify `--delete` option. Keep in mind that this is permanent deletion, you won't find deleted emails in your Trash/Bin folder.
 
 #### Q: How about data being overwritten?
 
 A:  If you don't download all of the attachments at first run and run datts again, it will download the same messages next time and write them to disk with slighty changed names. This is to avoid data overwriting as you may have more than one attachmet named the same name.
 
-#### Q: What does the --noinline option do?
+#### Q: What does the `--noinline` option do?
 
 A: When you create email and insert for eg. image in the text, it will become "inline attachment". Sometimes you don't want to download this type of files as often they are logos, banners or similiar garbage.
 
