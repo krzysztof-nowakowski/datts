@@ -11,7 +11,7 @@ including free gmail.com, outlook.com, yahoo.com etc.
 ```sh
  git clone https://github.com/krzysztof-nowakowski/datts
 ```
-or just download datts.py file
+or hit Download button
 
 ## How to use
 
