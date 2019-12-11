@@ -1,4 +1,8 @@
-# datts
+	       __      __  __      
+	  ____/ /___ _/ /_/ /______
+	 / __  / __ `/ __/ __/ ___/
+	/ /_/ / /_/ / /_/ /_(__  ) 
+	\__,_/\__,_/\__/\__/____/
 Download and save attachments from IMAP server
 
 ## Info
