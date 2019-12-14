@@ -16,7 +16,7 @@ from email import message_from_string
 from email.header import decode_header
 
 
-''' defult port for IMAP over SSL '''
+# Default port for IMAP over SSL.
 SERVER_PORT =  993
 
 
@@ -31,7 +31,7 @@ def main():
 		usage()
 		sys.exit(0)
 
-	''' True if option is required '''
+	# True if option is required.
 	options = [
 			['login=', True],
 			['password=',True],
@@ -46,7 +46,7 @@ def main():
 	]
 
 	try:
-		opts, args = getopt(sys.argv[1:], '', [options[x][0] for x in range(len(options))])
+		opts, _ = getopt(sys.argv[1:], '', [options[x][0] for x in range(len(options))])
      	except GetoptError as err:
 		print str(err)
 		sys.exit(1)
@@ -127,7 +127,7 @@ def main():
 	select_return_code, msg_count = server.select(mbox)
 	if select_return_code == 'OK':
 
-		uids_return_code, uids_data = server.uid('search', None, 'ALL')
+		_, uids_data = server.uid('search', None, 'ALL')
 		uids = uids_data[0].split()
 
 		if not uids:
@@ -136,16 +136,15 @@ def main():
 			server.logout()
 			sys.exit(0)
 
-		'''
-		SORT command may not be available in all IMAP servers. rfc3501, rfc5256
-		Instead we are sorting UIDs locally.
-		'''
+		
+		# SORT command may not be available in all IMAP servers. rfc3501, rfc5256.
+		# Instead we are sorting UIDs locally.
 		uids = [int(x) for x in uids]
 		uids.sort(reverse=True)
 
 		print '- Number of messages in {} mailbox: {}'.format(mbox,msg_count[0])
 
-		''' stats '''
+		# Stats
 		count_mail = 0
 		count_att = 0
 
@@ -156,7 +155,7 @@ def main():
 			attachment_present = False
 
 			print '- Message #: {}'.format(mail_id)
-			mail_return_code, mail_data = server.uid('fetch', mail_id, '(RFC822)')
+			_, mail_data = server.uid('fetch', mail_id, '(RFC822)')
 			mail = message_from_string(mail_data[0][1])
 
 			for part in mail.walk():
@@ -179,14 +178,14 @@ def main():
 				else:
 					attachment_present = True
 
-					''' filename can be UTF8, quoted-printable '''
+					# Filename can be UTF8, quoted-printable.
 					name, charset = decode_header(filename)[0]
 					if charset:
 						filename = name.decode(charset)
 
 					file_path = os.path.join(directory, filename)
 
-					''' avoid overwriting files by adding sequence number '''
+					# Avoid overwriting files by adding sequence number.
 					sequence = 1
 					while os.path.isfile(file_path):
 						new_filename = os.path.basename(file_path).split('.')[0] + '(' + str(sequence) + ')'
@@ -212,7 +211,7 @@ def main():
 			if not attachment_present:
 				print 'No attachment'
 
-			''' delete message '''
+			# Delete message.
 			if delete:
 				server.uid('store', mail_id, '+FLAGS', '\\Deleted')
 				server.expunge()
@@ -253,19 +252,18 @@ def usage():
 	--delete			should we delete message after download? Default is to NOT delete.
 	--dump				print provided options and exit
 	--noinline			skip attachments embedded in message body text
-
 	'''
 
 def banner():
 
-	''' ASCII art generated using `Text to ASCII Art Generator` at http://patorjk.com '''
+	# ASCII art generated using `Text to ASCII Art Generator` at http://patorjk.com
 
-	print '''
+	print r'''
 	       __      __  __      
 	  ____/ /___ _/ /_/ /______
 	 / __  / __ `/ __/ __/ ___/
 	/ /_/ / /_/ / /_/ /_(__  ) 
-	\__,_/\__,_/\__/\__/____/  v.0.1   
+	\__,_/\__,_/\__/\__/____/  v.0.1
 	'''
 
 if __name__ == '__main__':
