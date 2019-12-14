@@ -7,8 +7,7 @@ Download and save attachments from IMAP server
 
 ## Info
 
-This simple tool lets you download and save attachments from your e-mails. It should work on any mail service providers,
-including free gmail.com, outlook.com, yahoo.com etc.
+This simple tool lets you download and save attachments from your e-mails. It should work with any mail service providers that support IMAP protocol, including free gmail.com, outlook.com, yahoo.com etc.
 
 ## How to install
 
