@@ -1,0 +1,22 @@
+Popular IMAP providers:
+
+gmail.com
+	Server - imap.gmail.com
+	Port - 993
+	Requires SSL - Yes
+
+outlook.com
+	Server - outlook.office365.com
+	Port - 993
+	Requires SSL - Yes
+
+yahoo.com
+	Server - imap.mail.yahoo.com
+	Port - 993
+	Requires SSL - Yes
+
+yandex.com
+	Server - imap.yandex.com
+	Port - 993
+	Requires SSL - Yes
+
