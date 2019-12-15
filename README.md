@@ -59,6 +59,7 @@ is gmail.com.
 A: From your mail service provider, also check your account settings or maybe on one of this sites:
 * https://www.arclab.com/en/kb/email/list-of-smtp-and-imap-servers-mailserver-list.html
 * https://www.cubexsoft.com/help/imap-server.html
+* take a look at providers.txt
 
 #### Q: Will datts delete my messages in mailbox?
 
@@ -81,5 +82,5 @@ to whatever is needed.
 - [ ] replace --login/--password options with getpass
 - [ ] handling of --mbox/--dir with non-ASCII charset
 - [ ] display email subject instead of message UID
-- [ ] predefined list of popular IMAP services?
+- [x] predefined list of popular IMAP services?
 
