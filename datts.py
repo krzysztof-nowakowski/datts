@@ -11,14 +11,13 @@ import sys
 import socket
 from time import time, gmtime, strftime
 from getopt import getopt, GetoptError
+from getpass import getpass, GetPassWarning
 import imaplib
 from email import message_from_string
 from email.header import decode_header
 
-
 # Default port for IMAP over SSL.
 SERVER_PORT =  993
-
 
 def main():
 
@@ -34,7 +33,6 @@ def main():
 	# True if option is required.
 	options = [
 			['login=', True],
-			['password=',True],
 			['server=',True],
 			['dir=',True],
 			['mbox=',True],
@@ -66,9 +64,7 @@ def main():
 
 	for o,v in opts:
 		if o == '--login':
-			username = v 
-		if o == '--password':
-			password = v
+			username = v
 		if o == '--server':
 			server_name = v
 		if o == '--dir':
@@ -107,6 +103,11 @@ def main():
 			print 'Number of messages(--n) must be a positive value.'
 			sys.exit(1)
 	
+	try:
+		password = getpass()
+	except GetPassWarning as err:
+		print str(err)
+	
 	banner()
 	
 	start = time()
@@ -136,7 +137,6 @@ def main():
 			server.logout()
 			sys.exit(0)
 
-		
 		# SORT command may not be available in all IMAP servers. rfc3501, rfc5256.
 		# Instead we are sorting UIDs locally.
 		uids = [int(x) for x in uids]
