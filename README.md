@@ -19,7 +19,7 @@ or hit Download button
 ## How to use
 
 ```sh
-./datts --help
+./datts.py --help
 
 Usage:  ./datts.py --login --password --mbox --dir --server [--n] [--delete] [--dump] [--noinline] [--help]
 
@@ -27,7 +27,6 @@ Usage:  ./datts.py --login --password --mbox --dir --server [--n] [--delete] [--
 	-------------------------------------------
 	--help				show this help	
 	--login		string		login to your account
-	--password	string		password to your account
 	--server	string		server name
 	--mbox		string		remote folder with attachments
 	--dir		string		local folder for storing attachments
@@ -44,12 +43,12 @@ Usage:  ./datts.py --login --password --mbox --dir --server [--n] [--delete] [--
 is gmail.com.
 
 ```sh
-./datts --login name --password secret --server imap.gmail.com --mbox fun_stuff --dir backup/ 
+./datts.py --login name --server imap.gmail.com --mbox fun_stuff --dir backup/ 
 ```
 2. You want to process 100 messages from default folder(inbox) and save attachments to backup/ and delete those 100 messages after that. Your e-mail provider is outlook.com.
 
 ```sh
-./datts --login name --password secret --server outlook.office365.com --mbox inbox --dir backup/ --n 100 --delete
+./datts.py --login name --server outlook.office365.com --mbox inbox --dir backup/ --n 100 --delete
 ```
 
 ## Q&A
@@ -79,7 +78,7 @@ to whatever is needed.
 
 ## TODO:
 
-- [ ] replace --login/--password options with getpass
+- [x] replace --login/--password options with getpass
 - [ ] handling of --mbox/--dir with non-ASCII charset
 - [ ] display email subject instead of message UID
 - [x] predefined list of popular IMAP services?
