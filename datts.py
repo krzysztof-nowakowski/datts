@@ -238,13 +238,12 @@ def main():
 def usage():
 
 	print '\ndatts - download and save attachments from IMAP server'
-	print '\nUsage: ',  sys.argv[0], '''--login --password --mbox --dir --server [--n] [--delete] [--dump] [--noinline] [--help]
+	print '\nUsage: ',  sys.argv[0], '''--login --mbox --dir --server [--n] [--delete] [--dump] [--noinline] [--help]
 
 	Option		Argument	Description
 	-------------------------------------------
 	--help				show this help	
 	--login		string		login to your account
-	--password	string		password to your account
 	--server	string		server name
 	--mbox		string		remote folder with attachments
 	--dir		string		local folder for storing attachments
