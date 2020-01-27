@@ -21,7 +21,7 @@ or hit Download button
 ```sh
 ./datts.py --help
 
-Usage:  ./datts.py --login --password --mbox --dir --server [--n] [--delete] [--dump] [--noinline] [--help]
+Usage:  ./datts.py --login --mbox --dir --server [--n] [--delete] [--dump] [--noinline] [--help]
 
 	Option		Argument	Description
 	-------------------------------------------
