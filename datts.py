@@ -165,7 +165,7 @@ def main():
 				if noinline:
 					content = part.get_all('Content-Disposition')
 					if content is None:
-						pass
+						continue
 					else:
 						content = content[0].split(';')
 						if content[0] == 'inline':
@@ -262,7 +262,7 @@ def banner():
 	  ____/ /___ _/ /_/ /______
 	 / __  / __ `/ __/ __/ ___/
 	/ /_/ / /_/ / /_/ /_(__  ) 
-	\__,_/\__,_/\__/\__/____/  v.0.1
+	\__,_/\__,_/\__/\__/____/  v0.1
 	'''
 
 if __name__ == '__main__':
