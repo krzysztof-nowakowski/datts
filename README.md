@@ -79,7 +79,7 @@ to whatever is needed.
 ## TODO:
 
 - [x] replace --login/--password options with getpass
-- [ ] handling of --mbox/--dir with non-ASCII charset
+- [x] handling of --mbox/--dir with non-ASCII charset
 - [ ] display email subject instead of message UID
 - [x] predefined list of popular IMAP services?
 
