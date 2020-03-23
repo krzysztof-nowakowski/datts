@@ -1,9 +1,10 @@
-#!/usr/bin/python
+#!/usr/bin/python2
+#coding: utf8
 
 '''
 	datts - download and save attachments from IMAP server.
 
-	For help type: ./datts --help
+	For help type: ./datts.py --help
 '''
 
 import os
@@ -68,9 +69,10 @@ def main():
 		if o == '--server':
 			server_name = v
 		if o == '--dir':
-			directory = v
+			directory = unicode(v, 'utf8')
 		if o == '--mbox':
 			mbox = v
+			mbox_encoded = utf7mod_encode(unicode(v, 'utf8'))
 		if o == '--n':
 			how_many = v
 		if o == '--delete':
@@ -125,7 +127,7 @@ def main():
 
 	print '- Connected to server'
 
-	select_return_code, msg_count = server.select(mbox)
+	select_return_code, msg_count = server.select(mbox_encoded)
 	if select_return_code == 'OK':
 
 		_, uids_data = server.uid('search', None, 'ALL')
@@ -159,9 +161,9 @@ def main():
 			mail = message_from_string(mail_data[0][1])
 
 			for part in mail.walk():
+
 				if part.get_content_maintype() == 'multipart':
 					continue
-
 				if noinline:
 					content = part.get_all('Content-Disposition')
 					if content is None:
@@ -234,6 +236,26 @@ def main():
 		print 'Cannot select given mailbox: {}'.format(mbox)
 		server.logout()
 		sys.exit(1)
+
+def utf7mod_encode(text):
+	''' 
+	Encode text in modified UTF7.
+	IMAP4rev1 international mailbox names are encoded with modified UTF7, rfc3501 #section-5.1.3
+	'''
+
+	encoded = ''
+
+	for char in text:
+
+		if char >= u'\x20' and char <= u'\x7e':
+			if char == '&':
+				encoded += '&-'
+			else:
+				encoded += char
+		else:
+			encoded += char
+
+	return encoded.encode('utf7').replace('/', ',').replace('+', '&')
 		
 def usage():
 
