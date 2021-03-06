@@ -215,7 +215,7 @@ def main():
 
 			# Delete message.
 			if delete:
-				server.uid('store', mail_id, '+FLAGS', '\\Deleted')
+				server.uid('store', mail_id, '+FLAGS', '(\\Deleted)')
 				server.expunge()
 
 		    	count_mail += 1
