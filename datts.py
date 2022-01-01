@@ -13,12 +13,12 @@ import socket
 from time import time, gmtime, strftime
 from getopt import getopt, GetoptError
 from getpass import getpass, GetPassWarning
-import imaplib
+from imaplib import IMAP4, IMAP4_SSL
 from email import message_from_string
 from email.header import decode_header
 
 # Default port for IMAP over SSL.
-SERVER_PORT =  993
+SERVER_PORT = 993
 
 def main():
 
@@ -89,6 +89,7 @@ def main():
 				continue
 			else:
 				print '{:10} = {}'.format(o,v)
+
 		print '\n'
 		sys.exit(0)
 
@@ -116,12 +117,12 @@ def main():
 	print '- Starting...'
 
 	try:
-		server = imaplib.IMAP4_SSL(server_name, SERVER_PORT)
+		server = IMAP4_SSL(server_name, SERVER_PORT)
 		server.login(username, password)
 	except socket.error:
 		print 'Unable to connect to: {}'.format(server_name)
 		sys.exit(1)
-	except imaplib.IMAP4.error as err:
+	except IMAP4.error as err:
 		print 'Unable to login: {}'.format(err)
 		sys.exit(1)
 
@@ -156,9 +157,15 @@ def main():
 
 			attachment_present = False
 
-			print '- Message #: {}'.format(mail_id)
 			_, mail_data = server.uid('fetch', mail_id, '(RFC822)')
 			mail = message_from_string(mail_data[0][1])
+
+			subject = mail.get('subject')
+			if subject:
+				subject_text = decode_header(subject)
+				print 'Message: {}'.format(reconstruct_subject(subject_text))
+			else:
+				print 'Message: -'
 
 			for part in mail.walk():
 
@@ -256,7 +263,24 @@ def utf7mod_encode(text):
 			encoded += char
 
 	return encoded.encode('utf7').replace('/', ',').replace('+', '&')
-		
+
+def reconstruct_subject(subject):
+	''' 
+	Reconstruct subject from internal representation.
+	Can be split into individual parts with encoding charset type for each part.
+	'''
+
+	complete_subject = ''
+
+	for subject_part in subject:
+
+		if subject_part[1] is not None:
+			complete_subject += subject_part[0].decode(subject_part[1]) + ' '
+		else:
+			complete_subject += subject_part[0] + ' '
+
+	return complete_subject.encode('utf-8')
+	
 def usage():
 
 	print '\ndatts - download and save attachments from IMAP server'
