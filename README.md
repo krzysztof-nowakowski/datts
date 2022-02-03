@@ -78,10 +78,7 @@ to whatever is needed.
 
 ## TODO:
 
-- [x] replace --login/--password options with getpass
-- [x] handling of --mbox/--dir with non-ASCII charset
-- [x] display email subject instead of message UID
-- [x] predefined list of popular IMAP services?
 - [ ] support for simultaneous download
 - [ ] catch ctrl+c and act nicely
+- [ ] move to Python 3
 
