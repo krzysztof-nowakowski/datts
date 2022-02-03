@@ -5,6 +5,8 @@
     datts - download and save attachments from IMAP server.
 
     For help type: ./datts.py --help
+
+    v0.1.0
 '''
 
 import os
@@ -326,7 +328,7 @@ def banner():
       ____/ /___ _/ /_/ /______
      / __  / __ `/ __/ __/ ___/
     / /_/ / /_/ / /_/ /_(__  ) 
-    \__,_/\__,_/\__/\__/____/  v0.1
+    \__,_/\__,_/\__/\__/____/  v0.1.0
     '''
 
 if __name__ == '__main__':
