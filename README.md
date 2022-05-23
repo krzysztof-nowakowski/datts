@@ -8,6 +8,7 @@ Download and save attachments from IMAP server
 ## Info
 
 This simple tool lets you download and save attachments from your e-mails. It should work with any mail service providers that support IMAP protocol, including free gmail.com, outlook.com, yahoo.com etc.
+It supports simultaneous connections and you can interrupt download process by pressing Ctrl+C - it will exit gracefully.
 
 ## How to install
 
@@ -25,15 +26,16 @@ Usage:  ./datts.py --login --mbox --dir --server [--n] [--delete] [--dump] [--no
 
 	Option		Argument	Description
 	-------------------------------------------
-	--help				show this help	
-	--login		string		login to your account
-	--server	string		server name
-	--mbox		string		remote folder with attachments
-	--dir		string		local folder for storing attachments
-	--n		number		how many messages to download? Default is all of them.
-	--delete			should we delete message after download? Default is to NOT delete.
-	--dump				print provided options and exit
-	--noinline			skip attachments embedded in message body text
+    --help                  show this help	
+    --login     string      login to your account
+    --server    string      server name
+    --mbox      string      remote folder with attachments
+    --dir       string      local folder for storing attachments
+    --n         number      how many messages to download? Default is all of them.
+    --c         number      how many connections to start? Default is 1, max is 10.
+    --delete                should we delete message after download? Default is to NOT delete.
+    --dump                  print provided options and exit
+    --noinline              skip attachments embedded in message body text
 
 ```
 
@@ -49,6 +51,11 @@ is gmail.com.
 
 ```sh
 ./datts.py --login name --server outlook.office365.com --mbox inbox --dir backup/ --n 100 --delete
+```
+3. You have lots of files and want to speed up downloading process by starting 5 simultaneous connections
+
+```sh
+./datts.py --login name --server imap.gmail.com --mbox fun_stuff --dir backup/ --c 5
 ```
 
 ## Q&A
@@ -78,7 +85,5 @@ to whatever is needed.
 
 ## TODO:
 
-- [ ] support for simultaneous download
-- [ ] catch ctrl+c and act nicely
 - [ ] move to Python 3
 

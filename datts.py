@@ -6,12 +6,15 @@
 
     For help type: ./datts.py --help
 
-    v0.1.0
+    v0.2.0
 '''
 
 import os
 import sys
 import socket
+from signal import signal, SIGINT
+import Queue
+from threading import Thread, Lock
 from time import time, gmtime, strftime
 from getopt import getopt, GetoptError
 from getpass import getpass, GetPassWarning
@@ -19,18 +22,38 @@ from imaplib import IMAP4, IMAP4_SSL
 from email import message_from_string
 from email.header import decode_header
 
+def handler(signum, frame):
+    '''
+    Handler function for SIGINT.
+    '''
+
+    q_mail_in.put(SENTINEL)
+    print '\n- Interrupted by Ctrl+C, please wait...'
+
+signal(SIGINT, handler)
+
 # Default port for IMAP over SSL.
 SERVER_PORT = 993
+# Max number of workers
+MAX_THREAD_POOL_SIZE = 10
+# Triggers exit in the threads.
+SENTINEL = object()
+# Stats
+count_mail = 0
+count_att = 0
+
+q_mail_in = Queue.LifoQueue(maxsize=0)
+q_mail_out = Queue.LifoQueue(maxsize=0)
 
 def main():
     '''
     Main function.
     '''
 
-    delete = False
-    dump = False
-    how_many = None
-    noinline = False
+    global q_mail_in, q_mail_out
+
+    # Number of workers.
+    thread_pool_size = 1
 
     if len(sys.argv) < 2:
         usage()
@@ -46,7 +69,8 @@ def main():
         ['delete', False],
         ['help', False],
         ['dump', False],
-        ['noinline', False]
+        ['noinline', False],
+        ['c=', False]
     ]
 
     try:
@@ -68,79 +92,119 @@ def main():
         print 'Required options: {}'.format(missing)
         sys.exit(1)
 
+    # Options ready to use.
+    ok_opts = dict()
     for opt, val in opts:
         if opt == '--login':
-            username = val
+            ok_opts['username'] = val
         if opt == '--server':
-            server_name = val
+            ok_opts['server_name'] = val
         if opt == '--dir':
-            directory = unicode(val, 'utf8')
+            ok_opts['directory'] = unicode(val, 'utf8')
         if opt == '--mbox':
-            mbox = val
-            mbox_encoded = utf7mod_encode(unicode(val, 'utf8'))
+            ok_opts['mbox'] = val
+            ok_opts['mbox_encoded'] = utf7mod_encode(unicode(val, 'utf8'))
         if opt == '--n':
-            how_many = val
+            ok_opts['how_many'] = val
         if opt == '--delete':
-            delete = True
+            ok_opts['delete'] = True
         if opt == '--dump':
-            dump = True
+            ok_opts['dump'] = True
         if opt == '--noinline':
-            noinline = True
+            ok_opts['noinline'] = True
+        if opt == '--c':
+            thread_pool_size = val
 
-    if dump:
+    if 'dump' in ok_opts:
         print '\nOptions dump:\n'
         for opt, val in opts:
             if opt == '--dump':
                 continue
             else:
                 print '{:10} = {}'.format(opt, val)
-
         print '\n'
         sys.exit(0)
 
-    if not os.path.isdir(directory):
-        print 'No such directory: {}'.format(directory)
+    if not os.path.isdir(ok_opts['directory']):
+        print 'No such directory: {}'.format(ok_opts['directory'])
         sys.exit(1)
 
-    if how_many is not None:
+    if 'how_many' in ok_opts:
         try:
-            how_many = int(how_many)
-            if how_many < 0:
+            ok_opts['how_many'] = int(ok_opts['how_many'])
+            if ok_opts['how_many'] < 0:
                 raise ValueError
         except ValueError:
-            print 'Number of messages(--n) must be a positive value.'
+            print 'Option of messages(--n) must be positive number.'
             sys.exit(1)
+    else:
+        ok_opts['how_many'] = None
 
     try:
-        password = getpass()
+        thread_pool_size = int(thread_pool_size)
+        if thread_pool_size < 1 or thread_pool_size > MAX_THREAD_POOL_SIZE:
+            raise ValueError
+    except ValueError:
+        print 'Option of connections(--c) must be positive number and <= {}'.format(MAX_THREAD_POOL_SIZE)
+        sys.exit(1)
+
+    try:
+        ok_opts['password'] = getpass()
     except GetPassWarning as err:
         print str(err)
 
-    banner()
+    print_banner()
 
-    start = time()
+    #start_time = time()
     print '- Starting...'
 
-    try:
-        server = IMAP4_SSL(server_name, SERVER_PORT)
-        server.login(username, password)
-    except socket.error:
-        print 'Unable to connect to: {}'.format(server_name)
-        sys.exit(1)
-    except IMAP4.error as err:
-        print 'Unable to login: {}'.format(err)
-        sys.exit(1)
+    # Fetch UIDs
+    uids, msg_count = get_uids(SERVER_PORT, **ok_opts)
+
+    print '- Number of messages in {} mailbox: {}'.format(ok_opts['mbox'], msg_count[0])
+    print '- Starting download:'
+
+    # Fill queue with UIDs.
+    for mail_uid in uids[:ok_opts['how_many']]:
+        q_mail_in.put(mail_uid)
+
+    lock = Lock()
+
+    threads = [Thread(target=proccess_message, args=(q_mail_in,
+                                                     q_mail_out,
+                                                     lock,
+                                                     SERVER_PORT),
+                      kwargs=ok_opts) for _ in range(thread_pool_size)]
+
+    for thread in threads:
+        thread.start()
+
+    # Start main thread loop.
+    progress_loop()
+
+    for thread in threads:
+        thread.join(1.0)
+
+# End of function main().
+
+def get_uids(server_port, **ok_opts):
+    '''
+    Obtain message UIDs from IMAP server.
+    Returns UIDs(list) and total count of messages in the mailbox.
+    '''
+
+    server = connect(server_port, **ok_opts)
 
     print '- Connected to server'
 
-    select_return_code, msg_count = server.select(mbox_encoded)
+    select_return_code, msg_count = server.select(ok_opts['mbox_encoded'])
     if select_return_code == 'OK':
 
         _, uids_data = server.uid('search', None, 'ALL')
         uids = uids_data[0].split()
 
         if not uids:
-            print 'No messages found in: {}'.format(mbox)
+            print '- No messages found in: {}'.format(ok_opts['mbox'])
             server.close()
             server.logout()
             sys.exit(0)
@@ -150,97 +214,176 @@ def main():
         uids = [int(x) for x in uids]
         uids.sort(reverse=True)
 
-        print '- Number of messages in {} mailbox: {}'.format(mbox, msg_count[0])
+        # Main thread disconnects from server.
+        server.close()
+        server.logout()
+    else:
+        print '- Cannot select given mailbox: {}'.format(ok_opts['mbox'])
+        server.logout()
+        sys.exit(1)
 
-        # Stats
-        count_mail = 0
-        count_att = 0
+    return uids, msg_count
 
-        print '- Starting download:'
+def proccess_message(q_in, q_out, lock, server_port, **ok_opts):
+    '''
+    Worker function.
+    '''
 
-        for mail_id in uids[:how_many]:
+    # Variables, shared between threads.
+    global count_mail, count_att
 
-            attachment_present = False
+    server = connect(server_port, **ok_opts)
 
-            _, mail_data = server.uid('fetch', mail_id, '(RFC822)')
+    select_return_code, _ = server.select(ok_opts['mbox_encoded'])
+    if select_return_code == 'OK':
+
+        while not q_in.empty():
+            try:
+                message_id = q_in.get()
+            except Queue.Empty:
+                server.close()
+                server.logout()
+                break
+
+            if message_id is SENTINEL:
+                # Ctrl+C pressed, propagate to other threads.
+                q_in.put(SENTINEL)
+                server.close()
+                server.logout()
+                break
+
+            _, mail_data = server.uid('fetch', message_id, '(RFC822)')
             mail = message_from_string(mail_data[0][1])
 
             subject = mail.get('subject')
             if subject:
                 subject_text = decode_header(subject)
-                print 'Message: {}'.format(reconstruct_subject(subject_text))
+                subject_text = reconstruct_subject(subject_text)
             else:
-                print 'Message: -'
+                subject_text = '-'
 
+            mail_all_parts = []
             for part in mail.walk():
 
-                if part.get_content_maintype() == 'multipart':
-                    continue
-                if noinline:
-                    content = part.get_all('Content-Disposition')
-                    if content is None:
+                content = part.get('Content-Disposition')
+                if content:
+                    if 'noinline' in ok_opts and 'inline' in content:
                         continue
-                    else:
-                        content = content[0].split(';')
-                        if content[0] == 'inline':
-                            continue
-
                 filename = part.get_filename()
 
-                if filename is None:
-                    continue
-                else:
-                    attachment_present = True
+                if filename is not None:
 
                     # Filename can be UTF8, quoted-printable.
                     name, charset = decode_header(filename)[0]
                     if charset:
                         filename = name.decode(charset)
 
-                    file_path = os.path.join(directory, filename)
-                    file_path = generate_unique_filename(directory, file_path)
-
-                    print 'Saving file to: {}'.format(file_path.encode('utf-8'))
+                    file_path = os.path.join(ok_opts['directory'], filename)
+                    file_path = generate_unique_filename(ok_opts['directory'], file_path)
+                    file_path = file_path.encode('utf-8')
 
                     try:
-                        output_file = open(file_path, 'wb')
-                        output_file.write(part.get_payload(decode=True))
+                        with open(file_path, 'wb') as output_file:
+                            output_file.write(part.get_payload(decode=True))
                     except IOError as err:
-                        print 'Cannot write file: {}'.format(err)
-                        server.close()
-                        server.logout()
-                        sys.exit(1)
+                        file_error = err
                     else:
-                        output_file.close()
+                        file_error = None
 
-                    count_att += 1
+                    with lock:
+                        count_att += 1
+                else:
+                    file_path = None
+                    file_error = None
 
-            if not attachment_present:
-                print 'No attachment'
+                # Collect all parts of the message...
+                thread_msg_part = (message_id, subject_text, file_path, file_error)
+                mail_all_parts.append(thread_msg_part)
+            # and put them into the q_out queue so they arrive in order.
+            q_out.put(mail_all_parts)
 
             # Delete message.
-            if delete:
-                server.uid('store', mail_id, '+FLAGS', '(\\Deleted)')
+            if 'delete' in ok_opts and file_error is None:
+                server.uid('store', message_id, '+FLAGS', '(\\Deleted)')
                 server.expunge()
 
-            count_mail += 1
+            with lock:
+                count_mail += 1
 
-        end = strftime('%H:%M:%S', gmtime((time() - start)))
-
-        print '- Finished downloading'
-        print '----------------------------------------'
-        print 'Summary'
-        print '----------------------------------------'
-        print 'Number of messages processed: {:>10}'.format(count_mail)
-        print 'Number of attachments: {:>17}'.format(count_att)
-        print 'Time taken: {:>28}'.format(end)
-
-        server.close()
-        server.logout()
+            if file_error is not None:
+                break
     else:
-        print 'Cannot select given mailbox: {}'.format(mbox)
+        print '- Cannot select given mailbox: {}'.format(ok_opts['mbox'])
         server.logout()
         sys.exit(1)
+
+def progress_loop():
+    '''
+    Print progress messages.
+    '''
+
+    start_time = time()
+
+    # Main thread loop.
+    while True:
+
+        message_id_prev = ''
+        attachment_found_count = 0
+
+        try:
+            work = q_mail_out.get(timeout=5.0)
+
+            for message_id, subject_text, file_path, file_error in work:
+
+                # Print subject only once.
+                if message_id != message_id_prev:
+                    print 'Message: {}'.format(subject_text)
+                    message_id_prev = message_id
+
+                if file_path is not None:
+                    attachment_found_count += 1
+
+                if isinstance(file_error, Exception):
+                    try:
+                        raise file_error
+                    except IOError as err:
+                        print '- File saving error: {}, '.format(err)
+
+                if file_error is None and file_path is not None:
+                    print '- Saving file to: {}'.format(file_path)
+
+            if attachment_found_count == 0:
+                print '- Attachment not found.'
+
+        except Queue.Empty:
+            print '- Finished downloading'
+            break
+
+    end_time = strftime('%H:%M:%S', gmtime((time() - start_time)))
+
+    print '----------------------------------------'
+    print 'Summary'
+    print '----------------------------------------'
+    print 'Number of messages processed: {:>10}'.format(count_mail)
+    print 'Number of attachments: {:>17}'.format(count_att)
+    print 'Time taken: {:>28}'.format(end_time)
+
+def connect(server_port, **ok_opts):
+    '''
+    Connect to IMAP server.
+    '''
+
+    try:
+        server = IMAP4_SSL(ok_opts['server_name'], server_port)
+        server.login(ok_opts['username'], ok_opts['password'])
+    except socket.error:
+        print 'Unable to connect to: {}'.format(ok_opts['server_name'])
+        sys.exit(1)
+    except IMAP4.error as err:
+        print 'Unable to login: {} {}'.format(err, 'Check your credentials.')
+        sys.exit(1)
+
+    return server
 
 def generate_unique_filename(directory, file_path):
     '''
@@ -292,7 +435,7 @@ def reconstruct_subject(subject):
         else:
             complete_subject += subject_part[0] + ' '
 
-    return complete_subject.encode('utf-8')
+    return complete_subject.lstrip().encode('utf-8')
 
 def usage():
     '''
@@ -301,7 +444,7 @@ def usage():
 
     print '\ndatts - download and save attachments from IMAP server'
     print '\nUsage: ', sys.argv[0],
-    print '''--login --mbox --dir --server [--n] [--delete] [--dump] [--noinline] [--help]
+    print '''--login --mbox --dir --server [--n] [--c] [--delete] [--dump] [--noinline] [--help]
 
     Option      Argument    Description
     -------------------------------------------
@@ -311,12 +454,13 @@ def usage():
     --mbox      string      remote folder with attachments
     --dir       string      local folder for storing attachments
     --n         number      how many messages to download? Default is all of them.
+    --c         number      how many connections to start? Default is 1, max is 10.
     --delete                should we delete message after download? Default is to NOT delete.
     --dump                  print provided options and exit
     --noinline              skip attachments embedded in message body text
     '''
 
-def banner():
+def print_banner():
     '''
     Print nice banner.
     '''
@@ -324,13 +468,12 @@ def banner():
     # ASCII art generated using `Text to ASCII Art Generator` at http://patorjk.com
 
     print r'''
-
+           __      __  __      
       ____/ /___ _/ /_/ /______
      / __  / __ `/ __/ __/ ___/
     / /_/ / /_/ / /_/ /_(__  ) 
-    \__,_/\__,_/\__/\__/____/  v0.1.0
+    \__,_/\__,_/\__/\__/____/ v0.2.0
     '''
 
 if __name__ == '__main__':
-
     main()
