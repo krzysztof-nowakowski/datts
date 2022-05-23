@@ -24,7 +24,7 @@ or hit Download button
 
 Usage:  ./datts.py --login --mbox --dir --server [--n] [--delete] [--dump] [--noinline] [--help]
 
-    Option		Argument	Description
+    Option      Argument    Description
     -------------------------------------------
     --help                  show this help	
     --login     string      login to your account
